@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ForexFlip – RemitRight</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div><div id="fx"></div>
+
+<!-- Top bar: theme icon (left corner), tabs, demo button -->
+<!-- <header>
+  <div class="brand">
+    <button id="theme" aria-label="Toggle dark mode" title="Toggle theme"></button>
+    <h1>Forex<span>Flip</span></h1>
+  </div>
+  <nav id="nav">
+    <button data-go="convert" class="on">Converter</button>
+    <button data-go="history">Rate history</button>
+    <button data-go="compare">Compare providers</button>
+  </nav>
+  <div class="row" style="flex:0">
+    <button id="demo">Load $1,000 → INR demo</button>
+  </div>
+</header> -->
+<header><div class="brand"><h1>Forex<span>Flip</span></h1></div><nav id="nav"><button data-go="convert" class="on">Converter</button><button data-go="history">Rate history</button><button data-go="compare">Compare providers</button></nav><div class="row" style="flex:0"><button id="demo">Load $1,000 → INR demo</button><button id="theme" aria-label="Toggle dark mode" title="Toggle theme"></button></div></header>
+<!-- Hero (Converter tab only) -->
+<section class="hero" data-tab="convert">
+  <div class="card strip" style="flex-wrap:wrap;position:relative">
+    <div class="coin" style="--dl:0s">₹</div>
+    <div class="coin" style="--dl:-1s">$</div>
+    <div class="coin" style="--dl:-2s">€</div>
+    <div class="coin" style="--dl:-3s">¥</div>
+    <div class="cap" style="flex-basis:100%">GLOBAL CURRENCY • LIVE EXCHANGE EXPERIENCE</div>
+  </div>
+  <span class="pill">● SMART REMITTANCE COMPARISON</span>
+  <h2>Money moves.<br><span class="grad">Stay ahead.</span></h2>
+  <p>See what your recipient really gets. Compare spreads, fees and speed across providers, all in one place. Drag the floating symbols around.</p>
+  <div class="orbit"><i></i><i></i>
+    <b style="color:#5eead4;--dl:0s">$</b>
+    <b style="color:#a78bfa;--dl:-.6s">₹</b>
+    <b style="color:#f472b6;--dl:-1.2s">€</b>
+    <b style="color:#60a5fa;--dl:-1.8s">£</b>
+    <b style="color:#34d399;--dl:-2.4s">¥</b>
+  </div>
+</section>
+
+<!-- Favorite pairs dock -->
+<div id="dock" aria-label="Favorite pairs"></div>
+
+<main>
+  <!-- Tab 1: Converter -->
+  <section class="card" data-tab="convert">
+    <h2>Convert</h2>
+    <p class="sub">Enter an amount and pick a currency pair.</p>
+    <div class="seg"><button id="m-send" class="on">I send</button><button id="m-recv">They receive</button></div>
+    <label id="alab">Amount you send</label>
+    <input id="amt" type="number" min="0" step="any" value="1000" style="width:100%">
+    <div class="row" style="margin-top:10px">
+      <div><label>From</label><select id="from"></select></div>
+      <button id="swap" aria-label="Swap currencies">⇄</button>
+      <div><label>To</label><select id="to"></select></div>
+    </div>
+    <div style="margin-top:16px" class="mute">Mid-market conversion (what Google shows, not what you get)</div>
+    <div class="big" id="mid">–</div>
+    <div class="mute" id="rate"></div>
+    <div class="row" style="margin-top:10px"><button id="pin">☆ Pin this pair</button></div>
+    <div class="mute" id="src" style="margin-top:10px"></div>
+  </section>
+
+  <!-- Tab 2: Rate history -->
+  <section class="card" data-tab="history">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="flex:1;margin:0">Rate history</h2>
+      <div class="seg" id="rng" style="margin:0;flex:0 0 200px">
+        <button data-d="7">7D</button><button data-d="30" class="on">30D</button><button data-d="365">1Y</button>
+      </div>
+    </div>
+    <div class="cv"><canvas id="ch"></canvas></div>
+    <div class="mute">History is simulated around today’s rate (no history API reachable from a hosted page).</div>
+  </section>
+
+  <!-- Tab 3: Compare providers -->
+  <section class="card" id="cmpbox" data-tab="compare">
+    <h2>True cost comparison</h2>
+    <p class="sub">What each provider really delivers after spread and fees. Click a row for its breakdown.</p>
+    <div class="row">
+      <div><label>Recipient gets it via</label>
+        <select id="meth">
+          <option value="all">Any method</option>
+          <option value="bank">Bank account</option>
+          <option value="wallet">Mobile wallet</option>
+          <option value="cash">Cash pickup</option>
+        </select>
+      </div>
+      <div class="mute" id="save" style="flex:3"></div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Provider</th><th>Spread</th><th>Fee</th><th>You send</th><th>Recipient gets</th><th>Lost vs mid-market</th><th>Speed</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" data-tab="compare">
+    <h2 id="lt">Fee breakdown</h2>
+    <p class="sub">Where your money goes with the selected provider.</p>
+    <div class="led" id="led"></div>
+    <div class="mute" id="pp" style="margin-top:10px"></div>
+  </section>
+
+  <!-- Alert panel (opens from the bell button) -->
+  <section class="card" id="alertbox">
+    <h2>Target rate alert</h2>
+    <p class="sub">Get notified when your pair reaches the rate you want.</p>
+    <div class="row">
+      <select id="adir"><option value="ge">Rate rises to ≥</option><option value="le">Rate falls to ≤</option></select>
+      <input id="atgt" type="number" step="any" placeholder="Target rate">
+      <button class="pri" id="aset">Set alert</button>
+    </div>
+    <div id="alist" class="mute" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:8px"><button id="spike">Simulate +0.5% move</button></div>
+    <div class="mute" style="margin-top:6px">Rates drift live every 4 s so alerts can fire. Browser notifications need your permission.</div>
+  </section>
+</main>
+
+<!-- FAQ (Converter tab only) -->
+<section class="faq" data-tab="convert" id="faq">
+  <small>NEED TO KNOW</small>
+  <h2>Frequently asked questions</h2>
+  <details open><summary>What is a currency converter?</summary><p>A currency converter calculates the value of one currency in another using an exchange rate.</p></details>
+  <details><summary>Are the exchange rates live?</summary><p>When ForexFlip runs on a normal website or local server, rates come from the open.er-api.com service and are cached for 1 hour. If that service is unavailable, the app falls back to built-in sample rates. The line under the converter always shows which source is in use.</p></details>
+  <details><summary>What is the mid-market rate, and why is it not what I receive?</summary><p>The mid-market rate is the midpoint between the buy and sell price of a currency. Transfer providers add a spread to that rate and often charge a fee on top, so the recipient gets less. ForexFlip shows that gap for each provider.</p></details>
+  <details><summary>How is the recipient amount calculated?</summary><p>Recipient amount = (amount you send − provider fee) × mid-market rate × (1 − spread). In “They receive” mode, the app works backwards to show how much you need to send.</p></details>
+  <details><summary>Are the provider fees and spreads real quotes?</summary><p>No. They are illustrative figures for comparison. Always check the provider’s own quote before you send money.</p></details>
+  <details><summary>How do rate alerts work?</summary><p>Click the bell, enter a target rate and choose whether you want the rate to rise above it or fall below it. You get an on-screen notice, and a browser notification if you allow it, when the rate reaches your target.</p></details>
+  <details><summary>Is ForexFlip free?</summary><p>Yes. It is free to use and needs no sign-up.</p></details>
+</section>
+
+<!-- Footer (all tabs) -->
+<footer>
+  <span><b>ForexFlip</b> ↗</span>
+  <span>Designed for a smarter currency experience.</span>
+  <span>© 2026 ForexFlip.</span>
+</footer>
+
+<div id="toasts"></div>
+
+<!-- Alert bell -->
+<button id="bell" aria-label="Rate alerts" title="Rate alerts">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>
+  </svg>
+  <span id="bcount"></span>
+</button>
+
+<script src="script.js"></script>
+</body>
+</html>
